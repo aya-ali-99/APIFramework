@@ -28,7 +28,6 @@ import static org.junit.Assert.*;
 public class StepDefinition extends Utils {
 
     RequestSpecification reqSpec;
-    ResponseSpecification resSpec;
     Response response;
     TestDataBuild data = new TestDataBuild();
 
@@ -39,12 +38,6 @@ public class StepDefinition extends Utils {
         reqSpec = given()
                 .spec(requestSpecification())
                 .body(data.addPlacePayload(name, language, address));
-
-        resSpec = new ResponseSpecBuilder()
-                .expectContentType(ContentType.JSON)
-                .expectStatusCode(200)
-                .build();
-
 
     }
     @When("user calls {string} with {string} http request")
@@ -75,8 +68,20 @@ public class StepDefinition extends Utils {
     }
     @Then("{string} in response body is {string}")
     public void in_response_body_is(String key, String expectedValue) {
-        String responseString = response.asString();
-        JsonPath js = new JsonPath(responseString);
-        assertEquals(js.get(key), expectedValue);
+
+        assertEquals(getJsonPath(response, key), expectedValue);
+    }
+
+    @Then("verify place_id created that maps to {string} using {string}")
+    public void verify_place_id_created_that_maps_to_using(String expectedName, String resource) throws IOException {
+
+        String placeID = getJsonPath(response, "place_id");
+        reqSpec = given()
+                .spec(requestSpecification())
+                .queryParam("place_id", placeID);
+
+        user_calls_with_http_request(resource, "Get");
+        String actualPlaceName = getJsonPath(response, "name");
+        assertEquals(actualPlaceName, expectedName);
     }
 }
