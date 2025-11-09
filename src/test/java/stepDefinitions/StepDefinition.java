@@ -13,39 +13,32 @@ import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import pojo.AddPlace;
 import pojo.Location;
+import resources.APIResources;
 import resources.TestDataBuild;
+import resources.Utils;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.*;
 
-public class StepDefinition {
+public class StepDefinition extends Utils {
 
-    RequestSpecification postReq;
     RequestSpecification reqSpec;
     ResponseSpecification resSpec;
     Response response;
     TestDataBuild data = new TestDataBuild();
 
-    String postEndPoint = "/maps/api/place/add/json";
-    String getEndPoint = "/maps/api/place/get/json";
 
-    @Given("Add Place Payload")
-    public void add_place_payload() {
-        RestAssured.baseURI = "https://rahulshettyacademy.com";
-
-
-        postReq = new RequestSpecBuilder()
-                .setBaseUri("https://rahulshettyacademy.com")
-                .addQueryParam("key", "qaclick123")
-                .setContentType(ContentType.JSON)
-                .build();
+    @Given("Add Place Payload with {string} {string} {string}")
+    public void add_place_payload_with(String name, String language, String address) throws IOException {
 
         reqSpec = given()
-                .spec(postReq)
-                .body(data.addPlacePayload());
+                .spec(requestSpecification())
+                .body(data.addPlacePayload(name, language, address));
 
         resSpec = new ResponseSpecBuilder()
                 .expectContentType(ContentType.JSON)
@@ -54,16 +47,28 @@ public class StepDefinition {
 
 
     }
-    @When("user calls {string} with Post http request")
-    public void user_calls_with_post_http_request(String string) {
-        response = reqSpec
-                .when()
-                .post(postEndPoint)
-                .then()
-                .spec(resSpec)
-                .log().all()
-                .extract().response();
+    @When("user calls {string} with {string} http request")
+    public void user_calls_with_http_request(String resource, String httpMethod) {
+        APIResources resourceAPI = APIResources.valueOf(resource);
+
+        if (httpMethod.equalsIgnoreCase("Post")) {
+            response = reqSpec
+                    .when()
+                    .post(resourceAPI.getResource());
+        }
+        else if (httpMethod.equalsIgnoreCase("Get")) {
+            response = reqSpec
+                    .when()
+                    .get(resourceAPI.getResource());
+        }
+        else if (httpMethod.equalsIgnoreCase("Delete")) {
+            response = reqSpec
+                    .when()
+                    .delete(resourceAPI.getResource());
+        }
+
     }
+
     @Then("the API call is success with status code {int}")
     public void the_api_call_is_success_with_status_code(Integer int1) {
         assertEquals(response.getStatusCode(), 200);
