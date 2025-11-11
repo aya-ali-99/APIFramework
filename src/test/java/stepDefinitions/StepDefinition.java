@@ -30,6 +30,7 @@ public class StepDefinition extends Utils {
     RequestSpecification reqSpec;
     Response response;
     TestDataBuild data = new TestDataBuild();
+    static String placeID;
 
 
     @Given("Add Place Payload with {string} {string} {string}")
@@ -64,24 +65,31 @@ public class StepDefinition extends Utils {
 
     @Then("the API call is success with status code {int}")
     public void the_api_call_is_success_with_status_code(Integer int1) {
-        assertEquals(response.getStatusCode(), 200);
+        assertEquals(200, response.getStatusCode());
     }
     @Then("{string} in response body is {string}")
     public void in_response_body_is(String key, String expectedValue) {
 
-        assertEquals(getJsonPath(response, key), expectedValue);
+        assertEquals(expectedValue, getJsonPath(response, key));
     }
 
     @Then("verify place_id created that maps to {string} using {string}")
     public void verify_place_id_created_that_maps_to_using(String expectedName, String resource) throws IOException {
 
-        String placeID = getJsonPath(response, "place_id");
+        placeID = getJsonPath(response, "place_id");
         reqSpec = given()
                 .spec(requestSpecification())
                 .queryParam("place_id", placeID);
 
         user_calls_with_http_request(resource, "Get");
         String actualPlaceName = getJsonPath(response, "name");
-        assertEquals(actualPlaceName, expectedName);
+        assertEquals(expectedName, actualPlaceName);
+    }
+
+    @Given("DeletePlace Payload")
+    public void delete_place_payload() throws IOException {
+        reqSpec = given()
+                .spec(requestSpecification())
+                .body(data.deletePlacePayload(placeID));
     }
 }

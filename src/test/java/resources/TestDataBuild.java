@@ -27,4 +27,8 @@ public class TestDataBuild {
         addPlace.setLanguage(language);
         return addPlace;
     }
+
+    public String deletePlacePayload(String placeId){
+        return "{\r\n    \"place_id\" : \"" + placeId + "\"\r\n}";
+    }
 }
